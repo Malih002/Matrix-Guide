@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkbox Matriks</title>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+        }
+        .matrix-container {
+            background-color: black;
+            padding: 10px;
+            display: inline-block;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        td {
+            padding: 5px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .checkbox-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        input[type="checkbox"] {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #000;
+            background-color: white;
+            margin: 0;
+            appearance: none;
+            cursor: pointer;
+            position: relative;
+        }
+        input[type="checkbox"]:checked {
+            background-color: black;
+            border-color: black;
+        }
+        input[type="checkbox"]:checked::before {
+            content: '';
+        }
+        .checkbox-number {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: red;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #info-output {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <h2>Checkbox Matriks</h2>
+
+    <label for="x">Jumlah Kolom (x):</label>
+    <input type="number" id="x" min="1">
+    <br><br>
+
+    <label for="y">Jumlah Baris (y):</label>
+    <input type="number" id="y" min="1">
+    <br><br>
+
+    <button onclick="generateMatrix()">Buat Matriks</button>
+    <br><br>
+
+    <div id="matrix" class="matrix-container"></div>
+    <br>
+    <h3>Output Array:</h3>
+    <pre id="array-output"></pre> <!-- Tempat untuk menampilkan output array -->
+
+    <div id="info-output"></div> <!-- Tempat untuk menampilkan informasi JumlahMati dan Jumlah Nyala -->
+
+    <script>
+        let numbers = []; // Array untuk menyimpan angka yang dicentang
+        let totalCheckboxes = 0; // Total checkbox yang ada
+
+        function generateMatrix() {
+            const x = parseInt(document.getElementById('x').value);
+            const y = parseInt(document.getElementById('y').value);
+
+            if (isNaN(x) || isNaN(y) || x < 1 || y < 1) {
+                alert("Silakan masukkan nilai yang valid untuk kolom dan baris.");
+                return;
+            }
+
+            const matrixDiv = document.getElementById('matrix');
+            matrixDiv.innerHTML = '';
+            const table = document.createElement('table');
+            let count = 0; // Mulai angka dari 0
+            totalCheckboxes = x * y; // Total checkbox
+
+            for (let i = 0; i < y; i++) {
+                const row = document.createElement('tr');
+                let columns = [];
+
+                // Tentukan arah pengisian berdasarkan baris
+                if (i % 2 === 0) {
+                    // Baris genap, kiri ke kanan
+                    for (let j = 0; j < x; j++) {
+                        columns.push(count++);
+                    }
+                } else {
+                    // Baris ganjil, kanan ke kiri
+                    for (let j = 0; j < x; j++) {
+                        columns.unshift(count++); // Menambahkan angka ke depan array
+                    }
+                }
+
+                // Membuat sel untuk setiap kolom
+                columns.forEach(number => {
+                    const cell = document.createElement('td');
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'checkbox-wrapper';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `checkbox-${i}-${columns.indexOf(number)}`;
+                    checkbox.dataset.number = number; // Menyimpan angka dalam atribut data-number
+
+                    // Event listener untuk mengupdate array ketika checkbox dicentang
+                    checkbox.addEventListener('change', function() {
+                        updateArray(this);
+                    });
+
+                    const numberSpan = document.createElement('span');
+                    numberSpan.className = 'checkbox-number';
+                    numberSpan.textContent = number;
+
+                    wrapper.appendChild(checkbox);
+                    wrapper.appendChild(numberSpan);
+                    cell.appendChild(wrapper);
+                    row.appendChild(cell);
+                });
+
+                table.appendChild(row);
+            }
+
+            matrixDiv.appendChild(table);
+            updateArrayOutput();
+            updateInfoOutput();
+        }
+
+        // Fungsi untuk memperbarui array berdasarkan checkbox yang dicentang
+        function updateArray(checkbox) {
+            const number = parseInt(checkbox.dataset.number);
+            if (checkbox.checked) {
+                if (!numbers.includes(number)) {
+                    numbers.push(number);
+                }
+            } else {
+                const index = numbers.indexOf(number);
+                if (index !== -1) {
+                    numbers.splice(index, 1);
+                }
+            }
+
+            // Urutkan array angka setelah setiap perubahan
+            numbers.sort((a, b) => a - b); // Mengurutkan angka dari kecil ke besar
+            updateArrayOutput(); // Update tampilan output array setiap kali ada perubahan
+            updateInfoOutput(); // Update tampilan info setelah ada perubahan
+        }
+
+        // Fungsi untuk memperbarui output array di halaman
+        function updateArrayOutput() {
+            const arrayOutput = document.getElementById('array-output');
+            arrayOutput.textContent = `int map[${numbers.length}] = {${numbers.join(', ')}};`;
+        }
+
+        // Fungsi untuk memperbarui informasi JumlahMati dan Jumlah Nyala
+        function updateInfoOutput() {
+            const infoOutput = document.getElementById('info-output');
+            const jumlahMati = numbers.length;
+            const jumlahNyala = totalCheckboxes - jumlahMati;
+            infoOutput.innerHTML = `JumlahMati = ${jumlahMati}<br>Jumlah Nyala = ${jumlahNyala}`;
+        }
+    </script>
+</body>
+</html>
