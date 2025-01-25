@@ -72,6 +72,20 @@
     <button onclick="generateMatrix()">Buat Matriks</button>
     <br><br>
 
+    <!-- Tombol Mirror Horizontal -->
+    <button onclick="mirrorHorizontal()">Mirror Horizontal</button>
+    <br><br>
+
+    <!-- Tombol Mirror Vertical -->
+    <button onclick="mirrorVertical()">Mirror Vertical</button>
+    <br><br>
+
+    <button onclick="exportData()">Export Data</button>
+    <br><br>
+
+    <input type="file" id="import-file" onchange="importData(event)" />
+    <br><br>
+
     <div id="matrix" class="matrix-container"></div>
     <br>
     <h3>Output Array:</h3>
@@ -82,6 +96,8 @@
     <script>
         let numbers = []; // Array untuk menyimpan angka yang dicentang
         let totalCheckboxes = 0; // Total checkbox yang ada
+        let checkboxes = []; // Array untuk menyimpan elemen checkbox
+        let matrixData = []; // Array untuk menyimpan status setiap checkbox (dicentang atau tidak)
 
         function generateMatrix() {
             const x = parseInt(document.getElementById('x').value);
@@ -97,6 +113,10 @@
             const table = document.createElement('table');
             let count = 0; // Mulai angka dari 0
             totalCheckboxes = x * y; // Total checkbox
+
+            // Reset array checkboxes dan matrixData
+            checkboxes = [];
+            matrixData = [];
 
             for (let i = 0; i < y; i++) {
                 const row = document.createElement('tr');
@@ -115,16 +135,25 @@
                     }
                 }
 
+                // Menyimpan status checkbox untuk setiap baris
+                matrixData.push([]);
+
                 // Membuat sel untuk setiap kolom
-                columns.forEach(number => {
+                columns.forEach((number, index) => {
                     const cell = document.createElement('td');
                     const wrapper = document.createElement('div');
                     wrapper.className = 'checkbox-wrapper';
 
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
-                    checkbox.id = `checkbox-${i}-${columns.indexOf(number)}`;
+                    checkbox.id = `checkbox-${i}-${index}`;
                     checkbox.dataset.number = number; // Menyimpan angka dalam atribut data-number
+
+                    // Menambahkan checkbox ke array
+                    checkboxes.push(checkbox);
+
+                    // Inisialisasi status checkbox pada matrixData (false berarti tidak dicentang)
+                    matrixData[i].push(false);
 
                     // Event listener untuk mengupdate array ketika checkbox dicentang
                     checkbox.addEventListener('change', function() {
@@ -151,7 +180,14 @@
 
         // Fungsi untuk memperbarui array berdasarkan checkbox yang dicentang
         function updateArray(checkbox) {
+            const rowIndex = checkbox.id.split('-')[1]; // Ambil baris dari id checkbox
+            const colIndex = checkbox.id.split('-')[2]; // Ambil kolom dari id checkbox
             const number = parseInt(checkbox.dataset.number);
+
+            // Update status di matrixData
+            matrixData[rowIndex][colIndex] = checkbox.checked;
+
+            // Update numbers array
             if (checkbox.checked) {
                 if (!numbers.includes(number)) {
                     numbers.push(number);
@@ -164,7 +200,7 @@
             }
 
             // Urutkan array angka setelah setiap perubahan
-            numbers.sort((a, b) => a - b); // Mengurutkan angka dari kecil ke besar
+            numbers.sort((a, b) => a - b);
             updateArrayOutput(); // Update tampilan output array setiap kali ada perubahan
             updateInfoOutput(); // Update tampilan info setelah ada perubahan
         }
@@ -181,6 +217,138 @@
             const jumlahMati = numbers.length;
             const jumlahNyala = totalCheckboxes - jumlahMati;
             infoOutput.innerHTML = `JumlahMati = ${jumlahMati}<br>Jumlah Nyala = ${jumlahNyala}`;
+        }
+
+        // Fungsi untuk memmirror checkbox secara horizontal
+        function mirrorHorizontal() {
+            const x = parseInt(document.getElementById('x').value);
+            const y = parseInt(document.getElementById('y').value);
+
+            if (isNaN(x) || isNaN(y) || x < 1 || y < 1) {
+                alert("Silakan masukkan nilai yang valid untuk baris dan kolom.");
+                return;
+            }
+
+            // Mirror seluruh matriks (semua baris)
+            for (let i = 0; i < y; i++) {
+                for (let j = 0; j < Math.floor(x / 2); j++) {
+                    const leftIndex = j;
+                    const rightIndex = x - j - 1;
+
+                    // Tukar status di matrixData
+                    const temp = matrixData[i][leftIndex];
+                    matrixData[i][leftIndex] = matrixData[i][rightIndex];
+                    matrixData[i][rightIndex] = temp;
+
+                    // Ubah status checkbox pada DOM sesuai dengan matrixData
+                    const leftCheckbox = document.getElementById(`checkbox-${i}-${leftIndex}`);
+                    const rightCheckbox = document.getElementById(`checkbox-${i}-${rightIndex}`);
+                    leftCheckbox.checked = matrixData[i][leftIndex];
+                    rightCheckbox.checked = matrixData[i][rightIndex];
+                }
+            }
+
+            // Update Output
+            updateArrayFromMatrixData();  // Update numbers berdasarkan status terbaru
+            updateInfoOutput();
+            updateArrayOutput();
+        }
+
+        // Fungsi untuk memmirror checkbox secara vertikal
+        function mirrorVertical() {
+            const x = parseInt(document.getElementById('x').value);
+            const y = parseInt(document.getElementById('y').value);
+
+            if (isNaN(x) || isNaN(y) || x < 1 || y < 1) {
+                alert("Silakan masukkan nilai yang valid untuk baris dan kolom.");
+                return;
+            }
+
+            // Mirror seluruh matriks secara vertikal
+            for (let i = 0; i < Math.floor(y / 2); i++) {
+                const topRow = i;
+                const bottomRow = y - i - 1;
+
+                // Tukar seluruh kolom pada baris topRow dan bottomRow
+                for (let j = 0; j < x; j++) {
+                    // Tukar status di matrixData
+                    const temp = matrixData[topRow][j];
+                    matrixData[topRow][j] = matrixData[bottomRow][j];
+                    matrixData[bottomRow][j] = temp;
+
+                    // Ubah status checkbox pada DOM sesuai dengan matrixData
+                    const topCheckbox = document.getElementById(`checkbox-${topRow}-${j}`);
+                    const bottomCheckbox = document.getElementById(`checkbox-${bottomRow}-${j}`);
+                    topCheckbox.checked = matrixData[topRow][j];
+                    bottomCheckbox.checked = matrixData[bottomRow][j];
+                }
+            }
+
+            // Update Output
+            updateArrayFromMatrixData();  // Update numbers berdasarkan status terbaru
+            updateInfoOutput();
+            updateArrayOutput();
+        }
+
+        // Fungsi untuk mengupdate numbers array berdasarkan status terbaru dari matrixData
+        function updateArrayFromMatrixData() {
+            numbers = [];
+            for (let i = 0; i < matrixData.length; i++) {
+                for (let j = 0; j < matrixData[i].length; j++) {
+                    const number = parseInt(document.getElementById(`checkbox-${i}-${j}`).dataset.number);
+                    if (matrixData[i][j]) {
+                        if (!numbers.includes(number)) {
+                            numbers.push(number);
+                        }
+                    }
+                }
+            }
+            numbers.sort((a, b) => a - b);  // Mengurutkan angka dari kecil ke besar
+        }
+
+        // Fungsi untuk mengekspor data ke file .txt
+        function exportData() {
+            const data = numbers.join('\n'); // Data yang akan diekspor (nomor checkbox yang dicentang)
+            const blob = new Blob([data], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'checkbox_data.txt'; // Nama file yang akan diunduh
+            link.click(); // Simulasikan klik untuk memulai download
+        }
+
+        // Fungsi untuk mengimpor data dari file .txt
+        function importData(event) {
+            const file = event.target.files[0]; // Ambil file yang diunggah
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split('\n');
+                const x = parseInt(document.getElementById('x').value);
+                const y = parseInt(document.getElementById('y').value);
+
+                // Pastikan matriks sudah digenerate
+                if (!x || !y) {
+                    alert("Pastikan jumlah baris dan kolom sudah diisi dan matriks telah dibuat.");
+                    return;
+                }
+
+                // Setiap baris harus memeriksa nomor checkbox yang dicentang
+                lines.forEach(line => {
+                    const number = parseInt(line.trim());
+                    if (!isNaN(number)) {
+                        // Temukan checkbox yang sesuai dengan nomor
+                        checkboxes.forEach(checkbox => {
+                            if (parseInt(checkbox.dataset.number) === number) {
+                                checkbox.checked = true;
+                                updateArray(checkbox); // Update array dan info
+                            }
+                        });
+                    }
+                });
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
