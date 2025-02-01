@@ -72,6 +72,15 @@
     <button onclick="generateMatrix()">Buat Matriks</button>
     <br><br>
 
+    <label for="color-picker">Pilih Warna:</label>
+    <select id="color-picker">
+        <option value="black">Hitam</option>
+        <option value="blue">Biru</option>
+        <option value="yellow">Kuning</option>
+        <option value="green">Hijau</option>
+    </select>
+    <br><br>
+
     <!-- Tombol Mirror Horizontal -->
     <button onclick="mirrorHorizontal()">Mirror Horizontal</button>
     <br><br>
@@ -183,6 +192,7 @@
             const rowIndex = checkbox.id.split('-')[1]; // Ambil baris dari id checkbox
             const colIndex = checkbox.id.split('-')[2]; // Ambil kolom dari id checkbox
             const number = parseInt(checkbox.dataset.number);
+            const selectedColor = document.getElementById('color-picker').value; // Ambil warna yang dipilih
 
             // Update status di matrixData
             matrixData[rowIndex][colIndex] = checkbox.checked;
@@ -197,6 +207,15 @@
                 if (index !== -1) {
                     numbers.splice(index, 1);
                 }
+            }
+
+            // Update warna checkbox berdasarkan pilihan warna
+            if (checkbox.checked) {
+                checkbox.style.backgroundColor = selectedColor;
+                checkbox.style.borderColor = selectedColor;
+            } else {
+                checkbox.style.backgroundColor = 'white';
+                checkbox.style.borderColor = 'black';
             }
 
             // Urutkan array angka setelah setiap perubahan
